@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <mpi.h>
 #include <math.h>
 #include <complex.h>
@@ -62,10 +64,30 @@ void slave(int p, int q, int hp, int w, double dy, double dx, int b, int N) {
 
 int main(int argc, char *argv[]) {
   int myrank, numprocs;
+
   int w = 2048;
   int h = 2048;
   int N = 256;
-  double b = 1; 
+  double b = 1;
+  double r1 = 0, r2 = 0, r3 = w, r4 = h;
+
+  int i = 1;
+  while (i < argc) {
+    if (strcmp(argv[i], "-w") == 0) {
+      w = atoi(argv[i+1]);
+      i += 2;
+    } else if (strcmp(argv[i], "-h") == 0) {
+      h = atoi(argv[i+1]);
+      i += 2;
+    } else if (strcmp(argv[i], "-r") == 0) {
+      r1 = atoi(argv[i+1]);
+      r2 = atoi(argv[i+2]);
+      r3 = atoi(argv[i+3]);
+      r4 = atoi(argv[i+4]);
+      i += 2;
+    }
+  }
+
   MPI_Init(&argc, &argv);
 
   MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
@@ -87,5 +109,3 @@ int main(int argc, char *argv[]) {
 
   MPI_Finalize();
 }
-
-
