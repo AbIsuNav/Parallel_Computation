@@ -9,10 +9,11 @@
 
 void save_ascii(unsigned char *color, int N, int M) {
   FILE *fp;
+  int i, j;
 
   fp = fopen("color.txt", "w");
-  for (int j = 0; j < N; j++) {
-    for (int i = 0; i < M; i++) {
+  for (j = 0; j < N; j++) {
+    for (i = 0; i < M; i++) {
       fprintf(fp, "%hhu ", color[i + j*M]);
     }
     fprintf(fp, "\n");
@@ -22,12 +23,14 @@ void save_ascii(unsigned char *color, int N, int M) {
 
 void master(int w, int h, int hp, int numprocs) {
   MPI_Status status;
-  
+
+  int q;
   unsigned char color[w * h];
   int ioff;
-  for (int q = 1; q < numprocs; q++) {
+  int rc;
+  for (q = 1; q < numprocs; q++) {
     ioff = (q - 1) * hp;
-    int rc = MPI_Recv((void *)(color + ioff * w), w * hp, MPI_UNSIGNED_CHAR, q, TAG, MPI_COMM_WORLD, &status);
+    rc = MPI_Recv((void *)(color + ioff * w), w * hp, MPI_UNSIGNED_CHAR, q, TAG, MPI_COMM_WORLD, &status);
     printf("Return code from recv/rank %d: %d\n", q, rc);
   }
   save_ascii(color, h, w);
@@ -52,10 +55,11 @@ void slave(int p, int q, int hp, int w, double dy, double dx, int b, int N, doub
   double x_step = rh / hp;
   double y_step = rw / w;
   int ix = 0, iy = 0;
-  for (double x = rx; x < rx + rh; x+=x_step) {
+  double x, y;
+  for (x = rx; x < rx + rh; x+=x_step) {
     iy = 0;
     dreal = (x + xoff) * dx - b;
-    for (double y = ry; y < ry + rw; y+=y_step) {
+    for (y = ry; y < ry + rw; y+=y_step) {
       dimag = (y + yoff) * dy - b;
       d = dreal + dimag * I;
       buf[ix * w + iy] = cal_pixel(d, b, N);
