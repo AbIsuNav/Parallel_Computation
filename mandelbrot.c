@@ -43,19 +43,25 @@ unsigned char cal_pixel(double complex d, double b, int N) {
   return count;
 }
 
-void slave(int p, int q, int hp, int w, double dy, double dx, int b, int N) {
+void slave(int p, int q, int hp, int w, double dy, double dx, int b, int N, double rx, double ry, double rh, double rw) {
   unsigned char buf[w * hp];
   double dreal, dimag;
   double complex d;
-  int xoff = q * hp;
-  int yoff = 0;
-  for (int x = 0; x < hp; x++) {
+  double xoff = q * rh;
+  double yoff = 0.0;
+  double x_step = rh / hp;
+  double y_step = rw / w;
+  int ix = 0, iy = 0;
+  for (double x = rx; x < rx + rh; x+=x_step) {
+    iy = 0;
     dreal = (x + xoff) * dx - b;
-    for (int y = 0; y < w; y++) {
+    for (double y = ry; y < ry + rw; y+=y_step) {
       dimag = (y + yoff) * dy - b;
       d = dreal + dimag * I;
-      buf[x * w + y] = cal_pixel(d, b, N);
+      buf[ix * w + iy] = cal_pixel(d, b, N);
+      iy++;
     }
+    ix++;
   }
   int rc = MPI_Send((void *)buf, w * hp, MPI_UNSIGNED_CHAR, 0, TAG, MPI_COMM_WORLD);
   /* printf("Return code from send/rank %d: %d\n", q+1, rc); */
@@ -69,7 +75,7 @@ int main(int argc, char *argv[]) {
   int h = 2048;
   int N = 256;
   double b = 1;
-  double r1 = 0, r2 = 0, r3 = w, r4 = h;
+  double rx = 0, ry = 0, rw = w, rh = h;
 
   int i = 1;
   while (i < argc) {
@@ -80,11 +86,11 @@ int main(int argc, char *argv[]) {
       h = atoi(argv[i+1]);
       i += 2;
     } else if (strcmp(argv[i], "-r") == 0) {
-      r1 = atoi(argv[i+1]);
-      r2 = atoi(argv[i+2]);
-      r3 = atoi(argv[i+3]);
-      r4 = atoi(argv[i+4]);
-      i += 2;
+      rx = atof(argv[i+1]);
+      ry = atof(argv[i+2]);
+      rh = atof(argv[i+3]);
+      rw = atof(argv[i+4]);
+      i += 5;
     }
   }
 
@@ -103,7 +109,7 @@ int main(int argc, char *argv[]) {
     master(w, h, hp, numprocs);
     break;
   default:
-    slave(0, myrank - 1, hp, w, dy, dx, b, N);
+    slave(0, myrank - 1, hp, w, dy, dx, b, N, rx, ry, rh, rw);
     break;
   }
 
