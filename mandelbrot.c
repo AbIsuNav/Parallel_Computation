@@ -64,8 +64,7 @@ void slave(int p, int q, int hp, int w, double dy, double dx, int b, int N, doub
       buf[ix * w + iy] = cal_pixel(d, b, N);
     }
    }
-  printf("x: %d\ty: %d\t\n", ix*3, iy);
-  int rc = MPI_Send((void *)buf, w * hp, MPI_UNSIGNED_CHAR, 0, TAG, MPI_COMM_WORLD);
+  MPI_Send((void *)buf, w * hp, MPI_UNSIGNED_CHAR, 0, TAG, MPI_COMM_WORLD);
   /* printf("Return code from send/rank %d: %d\n", q+1, rc); */
   /* printf("Everything sent from rank %d\n", q + 1); */
 }
